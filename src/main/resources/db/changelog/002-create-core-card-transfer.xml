@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <property name="userTableName" value="users"/>
+    <property name="userIdType" value="BIGINT"/>
+
+    <changeSet id="002-01-create-card" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="card"/>
+            </not>
+        </preConditions>
+        <createTable tableName="card">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="${userIdType}">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last4" type="VARCHAR(4)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="pan_encrypted" type="VARCHAR(128)"/>
+
+            <column name="expiry_month" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_year" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="balance" type="NUMERIC(19,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="requested_block_at" type="TIMESTAMP WITH TIME ZONE"/>
+
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- FK на users -->
+        <addForeignKeyConstraint
+                baseTableName="card"
+                baseColumnNames="user_id"
+                referencedTableName="${userTableName}"
+                referencedColumnNames="id"
+                onDelete="CASCADE"
+                constraintName="fk_card_user"/>
+
+        <!-- Индексы -->
+        <createIndex tableName="card" indexName="idx_card_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="card" indexName="idx_card_user_status">
+            <column name="user_id"/>
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="card" indexName="idx_card_last4">
+            <column name="last4"/>
+        </createIndex>
+
+        <sql>
+            ALTER TABLE card
+                ADD CONSTRAINT chk_card_expiry_month CHECK (expiry_month BETWEEN 1 AND 12);
+            ALTER TABLE card
+                ADD CONSTRAINT chk_card_balance_nonneg CHECK (balance &gt;= 0);
+            ALTER TABLE card
+                ADD CONSTRAINT chk_card_status CHECK (status IN ('ACTIVE','BLOCKED','EXPIRED'));
+        </sql>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="card" constraintName="fk_card_user"/>
+            <dropTable tableName="card" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="002-02-create-transfer" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="transfer"/>
+            </not>
+        </preConditions>
+        <createTable tableName="transfer">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="user_id" type="${userIdType}">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="from_card_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_card_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="amount" type="NUMERIC(19,2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="message" type="TEXT"/>
+
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="transfer"
+                baseColumnNames="user_id"
+                referencedTableName="${userTableName}"
+                referencedColumnNames="id"
+                constraintName="fk_transfer_user"/>
+
+        <addForeignKeyConstraint
+                baseTableName="transfer"
+                baseColumnNames="from_card_id"
+                referencedTableName="card"
+                referencedColumnNames="id"
+                constraintName="fk_transfer_from_card"/>
+
+        <addForeignKeyConstraint
+                baseTableName="transfer"
+                baseColumnNames="to_card_id"
+                referencedTableName="card"
+                referencedColumnNames="id"
+                constraintName="fk_transfer_to_card"/>
+
+        <sql>
+            <![CDATA[
+            ALTER TABLE transfer
+                ADD CONSTRAINT chk_transfer_from_ne_to
+                    CHECK (from_card_id <> to_card_id);
+            ]]>
+        </sql>
+
+        <!-- Индексы -->
+        <createIndex tableName="transfer" indexName="idx_transfer_user_created">
+            <column name="user_id"/>
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="transfer" indexName="idx_transfer_from_card">
+            <column name="from_card_id"/>
+        </createIndex>
+        <createIndex tableName="transfer" indexName="idx_transfer_to_card">
+            <column name="to_card_id"/>
+        </createIndex>
+        <createIndex tableName="transfer" indexName="idx_transfer_status">
+            <column name="status"/>
+        </createIndex>
+
+        <sql>
+            ALTER TABLE transfer
+                ADD CONSTRAINT chk_transfer_amount_pos CHECK (amount &gt; 0);
+            ALTER TABLE transfer
+                ADD CONSTRAINT chk_transfer_status CHECK (status IN ('PENDING','COMPLETED','FAILED'));
+        </sql>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="transfer" constraintName="fk_transfer_user"/>
+            <dropForeignKeyConstraint baseTableName="transfer" constraintName="fk_transfer_from_card"/>
+            <dropForeignKeyConstraint baseTableName="transfer" constraintName="fk_transfer_to_card"/>
+            <dropTable tableName="transfer" cascadeConstraints="true"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="002-03-trigger-card-updated-at" author="you" runOnChange="true">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="card"/>
+        </preConditions>
+        <sql dbms="postgresql" splitStatements="false">
+        <![CDATA[
+            CREATE OR REPLACE FUNCTION set_updated_at()
+        RETURNS TRIGGER AS $func$
+            BEGIN
+            NEW.updated_at := NOW();
+            RETURN NEW;
+            END;
+            $func$ LANGUAGE plpgsql;
+            ]]>
+    </sql>
+
+        <sql dbms="postgresql">
+            DROP TRIGGER IF EXISTS card_set_updated_at ON card;
+            CREATE TRIGGER card_set_updated_at
+                BEFORE UPDATE ON card
+                FOR EACH ROW
+                EXECUTE FUNCTION set_updated_at();
+        </sql>
+
+        <rollback>
+            <sql dbms="postgresql">DROP TRIGGER IF EXISTS card_set_updated_at ON card;</sql>
+            <sql dbms="postgresql">DROP FUNCTION IF EXISTS set_updated_at();</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="002-04-comments" author="you">
+        <sql>
+            COMMENT ON TABLE card IS 'Bank card owned by user';
+            COMMENT ON COLUMN card.last4 IS 'Last 4 digits for masked display';
+            COMMENT ON COLUMN card.requested_block_at IS 'User requested block timestamp (null if none)';
+            COMMENT ON TABLE transfer IS 'Transfers between user''s own cards';
+        </sql>
+        <rollback>
+            <sql>
+                COMMENT ON TABLE card IS NULL;
+                COMMENT ON COLUMN card.last4 IS NULL;
+                COMMENT ON COLUMN card.requested_block_at IS NULL;
+                COMMENT ON TABLE transfer IS NULL;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="003-add-transfer-idempotency" author="you">
+        <addColumn tableName="transfer">
+            <column name="idempotency_key" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addUniqueConstraint
+                tableName="transfer"
+                columnNames="user_id, idempotency_key"
+                constraintName="uq_transfer_user_idempotency"/>
+
+        <createIndex tableName="transfer" indexName="ix_transfer_user_created_at">
+            <column name="user_id"/>
+            <column name="created_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="transfer" indexName="ix_transfer_user_created_at"/>
+            <dropUniqueConstraint tableName="transfer" constraintName="uq_transfer_user_idempotency"/>
+            <dropColumn tableName="transfer" columnName="idempotency_key"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

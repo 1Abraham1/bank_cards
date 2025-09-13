@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: bank_cards
+    environment:
+      POSTGRES_DB: bank_cards
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5440:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data

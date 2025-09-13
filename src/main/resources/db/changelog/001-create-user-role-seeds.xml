@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.25.xsd">
+
+    <!-- users -->
+    <changeSet id="001-01-create-users" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+        </preConditions>
+        <createTable tableName="users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_users"/>
+            </column>
+            <column name="username" type="VARCHAR(30)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_users_username"/>
+            </column>
+            <column name="password" type="VARCHAR(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(50)">
+                <constraints nullable="true" unique="true" uniqueConstraintName="uk_users_email"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="users"/>
+        </rollback>
+    </changeSet>
+
+    <!-- roles -->
+    <changeSet id="001-02-create-roles" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="roles"/>
+            </not>
+        </preConditions>
+        <createTable tableName="roles">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_roles"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="roles"/>
+        </rollback>
+    </changeSet>
+
+    <!-- users_roles -->
+    <changeSet id="001-03-create-users-roles" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users_roles"/>
+            </not>
+        </preConditions>
+        <createTable tableName="users_roles">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="users_roles"
+                       columnNames="user_id, role_id"
+                       constraintName="pk_users_roles"/>
+
+        <addForeignKeyConstraint baseTableName="users_roles"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"
+                                 constraintName="fk_users_roles_user"/>
+
+        <addForeignKeyConstraint baseTableName="users_roles"
+                                 baseColumnNames="role_id"
+                                 referencedTableName="roles"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"
+                                 constraintName="fk_users_roles_role"/>
+
+        <rollback>
+            <dropTable tableName="users_roles"/>
+        </rollback>
+    </changeSet>
+
+    <!-- начальные роли -->
+    <changeSet id="001-04-insert-roles" author="you">
+        <insert tableName="roles">
+            <column name="name" value="ROLE_USER"/>
+        </insert>
+        <insert tableName="roles">
+            <column name="name" value="ROLE_ADMIN"/>
+        </insert>
+        <rollback>
+            <delete tableName="roles">
+                <where>name IN ('ROLE_USER','ROLE_ADMIN')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- начальные пользователи -->
+    <changeSet id="001-05-insert-users" author="you">
+        <insert tableName="users">
+            <column name="username" value="user"/>
+            <column name="password" value="$2a$04$Fx/SX9.BAvtPlMyIIqqFx.hLY2Xp8nnhpzvEEVINvVpwIPbA3v/.i"/>
+            <column name="email" value="user@gmail.com"/>
+        </insert>
+        <insert tableName="users">
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$04$Fx/SX9.BAvtPlMyIIqqFx.hLY2Xp8nnhpzvEEVINvVpwIPbA3v/.i"/>
+            <column name="email" value="admin@gmail.com"/>
+        </insert>
+        <rollback>
+            <delete tableName="users">
+                <where>username IN ('user','admin')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- привязка ролей к пользователям -->
+    <changeSet id="001-06-insert-users-roles" author="you">
+        <insert tableName="users_roles">
+            <column name="user_id" valueNumeric="1"/>
+            <column name="role_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="users_roles">
+            <column name="user_id" valueNumeric="2"/>
+            <column name="role_id" valueNumeric="2"/>
+        </insert>
+        <rollback>
+            <sql>
+                DELETE FROM users_roles
+                WHERE (user_id, role_id) IN (
+                (SELECT u.id, r.id FROM users u JOIN roles r ON r.name = 'ROLE_USER'  WHERE u.username = 'user'),
+                (SELECT u.id, r.id FROM users u JOIN roles r ON r.name = 'ROLE_ADMIN' WHERE u.username = 'admin')
+                );
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
