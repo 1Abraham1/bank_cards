@@ -3,7 +3,7 @@ package com.abrik.bank_cards.bank_cards.service.admin;
 import com.abrik.bank_cards.bank_cards.dto.card.CardResponse;
 import com.abrik.bank_cards.bank_cards.dto.card.CardStatus;
 import com.abrik.bank_cards.bank_cards.dto.card.CreateCardRequest;
-import com.abrik.bank_cards.bank_cards.dto.card.RequestStatusResponse;
+import com.abrik.bank_cards.bank_cards.dto.card.StatusResponse;
 import com.abrik.bank_cards.bank_cards.dto.common.PageResponse;
 import com.abrik.bank_cards.bank_cards.entity.Card;
 import com.abrik.bank_cards.bank_cards.entity.User;
@@ -70,16 +70,16 @@ public class CardAdminService {
     }
 
     @Transactional
-    public RequestStatusResponse blockCard(UUID cardId) {
+    public StatusResponse blockCard(UUID cardId) {
         return changeStatus(cardId, CardStatus.BLOCKED);
     }
 
     @Transactional
-    public RequestStatusResponse activateCard(UUID cardId) {
+    public StatusResponse activateCard(UUID cardId) {
         return changeStatus(cardId, CardStatus.ACTIVE);
     }
 
-    private RequestStatusResponse changeStatus(UUID cardId, CardStatus newStatus) {
+    private StatusResponse changeStatus(UUID cardId, CardStatus newStatus) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new NotFoundException("Card not found"));
 
@@ -96,7 +96,7 @@ public class CardAdminService {
         card.setStatus(newStatus);
         cardRepository.saveAndFlush(card);
 
-        return new RequestStatusResponse(
+        return new StatusResponse(
                 card.getId(),
                 card.getRequestedBlockAt(),
                 card.getStatus()

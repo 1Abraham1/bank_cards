@@ -6,10 +6,11 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/* Оставил поля для изменения,
+* так как по ТЗ просили CRUD.
+* в реальности вряд ли применяется */
 @Data
-public class CreateCardRequest {
-    Long userId;
-
+public class UpdateCardRequest {
     @NotBlank
     @Pattern(regexp = "\\d{13,19}", message = "PAN должен содержать 13–19 цифр")
     @Schema(example = "5212345678901234")
@@ -22,11 +23,4 @@ public class CreateCardRequest {
     @Min(2024)
     @Schema(example = "2030")
     private short expiryYear;
-
-    @NotBlank
-    @Pattern(regexp = "^[A-Z]{3}$", message = "Код валюты ISO-4217")
-    @Schema(example = "USD")
-    private String currency;
-
-    private BigDecimal balance;
 }

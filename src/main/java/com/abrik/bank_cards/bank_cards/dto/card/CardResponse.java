@@ -7,10 +7,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-@Schema(description = "Карта")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(description = "Карта")
 public class CardResponse {
     @Schema(example = "7f6f2d4f-9f49-4c57-b0a9-f4a8a0b5a820")
     private UUID id;
@@ -19,6 +19,8 @@ public class CardResponse {
 
     @Schema(example = "**** **** **** 1234")
     private String maskedNumber;
+
+    private String panDecrypted;
 
     @Schema(example = "9")
     private short expiryMonth;

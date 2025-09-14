@@ -1,9 +1,6 @@
 package com.abrik.bank_cards.bank_cards.controller.user;
 
-import com.abrik.bank_cards.bank_cards.dto.card.CardResponse;
-import com.abrik.bank_cards.bank_cards.dto.card.CardStatus;
-import com.abrik.bank_cards.bank_cards.dto.card.CreateCardRequest;
-import com.abrik.bank_cards.bank_cards.dto.card.RequestStatusResponse;
+import com.abrik.bank_cards.bank_cards.dto.card.*;
 import com.abrik.bank_cards.bank_cards.dto.common.PageResponse;
 import com.abrik.bank_cards.bank_cards.security.MyUserDetails;
 import com.abrik.bank_cards.bank_cards.service.user.CardService;
@@ -29,6 +26,13 @@ public class CardController {
         return cardService.createCard(myUserDetails.getUserId(), request);
     }
 
+    @PatchMapping("/{cardId}")
+    public CardResponse updateCard(@AuthenticationPrincipal MyUserDetails myUserDetails,
+                                @RequestBody UpdateCardRequest request,
+                                @PathVariable UUID cardId) {
+        return cardService.updateMyCard(myUserDetails.getUserId(), cardId, request);
+    }
+
     @GetMapping
     public PageResponse<CardResponse> listMyCards(
             @AuthenticationPrincipal MyUserDetails myUserDetails,
@@ -45,8 +49,8 @@ public class CardController {
     }
 
     @PostMapping("/{cardId}/request-block")
-    public RequestStatusResponse requestBlock(@AuthenticationPrincipal MyUserDetails myUserDetails,
-                                              @PathVariable UUID cardId) {
+    public StatusResponse requestBlock(@AuthenticationPrincipal MyUserDetails myUserDetails,
+                                       @PathVariable UUID cardId) {
         return cardService.requestBlock(myUserDetails.getUserId(), cardId);
     }
 

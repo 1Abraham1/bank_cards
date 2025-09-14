@@ -14,6 +14,11 @@ import java.util.List;
 @Component
 public class CardUtil {
     private final Clock clock = Clock.systemUTC();
+    private final PanCryptoUtil panCryptoUtil;
+
+    public CardUtil(PanCryptoUtil panCryptoUtil) {
+        this.panCryptoUtil = panCryptoUtil;
+    }
 
     public void validateExpiry(short month, short year) {
         if (month < 1 || month > 12) {
@@ -68,6 +73,7 @@ public class CardUtil {
                 card.getId(),
                 card.getUserId(),
                 maskCardNumber(card.getLast4()),
+                panCryptoUtil.decrypt(card.getPanEncrypted()),
                 card.getExpiryMonth(),
                 card.getExpiryYear(),
                 card.getStatus(),

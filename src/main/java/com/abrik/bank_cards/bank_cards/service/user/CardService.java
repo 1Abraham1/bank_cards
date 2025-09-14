@@ -1,15 +1,13 @@
 package com.abrik.bank_cards.bank_cards.service.user;
 
-import com.abrik.bank_cards.bank_cards.dto.card.CardResponse;
-import com.abrik.bank_cards.bank_cards.dto.card.CardStatus;
-import com.abrik.bank_cards.bank_cards.dto.card.CreateCardRequest;
-import com.abrik.bank_cards.bank_cards.dto.card.RequestStatusResponse;
+import com.abrik.bank_cards.bank_cards.dto.card.*;
 import com.abrik.bank_cards.bank_cards.dto.common.PageResponse;
 import com.abrik.bank_cards.bank_cards.entity.Card;
 import com.abrik.bank_cards.bank_cards.exception.BadRequestException;
 import com.abrik.bank_cards.bank_cards.exception.NotFoundException;
 import com.abrik.bank_cards.bank_cards.repository.CardRepository;
 import com.abrik.bank_cards.bank_cards.util.CardUtil;
+import com.abrik.bank_cards.bank_cards.util.PanCryptoUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +25,7 @@ import java.util.UUID;
 public class CardService {
     private final CardRepository cardRepository;
     private final CardUtil cardUtil;
+    private final PanCryptoUtil panCryptoUtil;
     private final Clock clock = Clock.systemUTC();
 
     public CardResponse createCard(Long userId, CreateCardRequest request) {
@@ -38,13 +37,13 @@ public class CardService {
         }
 
         String last4 = pan.substring(pan.length() - 4);
-//        String panEncrypted = panCryptoUtil.encrypt(pan);
+        String panEncrypted = panCryptoUtil.encrypt(pan);
 
         Card card = new Card();
         card.setId(UUID.randomUUID());
         card.setUserId(userId);
         card.setLast4(last4);
-        card.setPanEncrypted(pan);
+        card.setPanEncrypted(panEncrypted);
         card.setExpiryMonth(request.getExpiryMonth());
         card.setExpiryYear(request.getExpiryYear());
         card.setStatus(CardStatus.ACTIVE);
@@ -80,7 +79,7 @@ public class CardService {
     }
 
     @Transactional
-    public RequestStatusResponse requestBlock(Long userId, UUID cardId) {
+    public StatusResponse requestBlock(Long userId, UUID cardId) {
         Card card = cardRepository.findByIdAndUserId(cardId, userId)
                 .orElseThrow(() -> new NotFoundException("Card not found"));
 
@@ -98,7 +97,7 @@ public class CardService {
             cardRepository.save(card);
         }
 
-        return new RequestStatusResponse(
+        return new StatusResponse(
                 card.getId(),
                 card.getRequestedBlockAt(),
                 card.getStatus()
@@ -117,5 +116,30 @@ public class CardService {
     @Transactional
     public void deleteCard(Long userId, UUID cardId) {
         cardRepository.deleteByIdAndUserId(cardId, userId);
+    }
+
+    public CardResponse updateMyCard(Long userId, UUID cardId, UpdateCardRequest request) {
+        Card card = cardRepository.findByIdAndUserId(cardId, userId)
+                .orElseThrow(() -> new NotFoundException("Card not found"));
+
+        if (card.getStatus() == CardStatus.BLOCKED) {
+            throw new BadRequestException("Card is BLOCKED and cannot be changed");
+        }
+        if (card.getStatus() == CardStatus.EXPIRED) {
+            throw new BadRequestException("Card is EXPIRED and cannot be changed");
+        }
+
+        String pan = request.getPan();
+        String panEncrypted = panCryptoUtil.encrypt(pan);
+        String last4 = pan.substring(pan.length() - 4);
+        card.setUpdatedAt(Instant.now(clock));
+        card.setPanEncrypted(panEncrypted);
+        card.setLast4(last4);
+        card.setExpiryMonth(request.getExpiryMonth());
+        card.setExpiryYear(request.getExpiryYear());
+
+        Card saved = cardRepository.save(card);
+
+        return cardUtil.toResponse(saved);
     }
 }

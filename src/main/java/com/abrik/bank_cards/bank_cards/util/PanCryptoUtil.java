@@ -1,65 +1,61 @@
 package com.abrik.bank_cards.bank_cards.util;
 
-import org.springframework.context.annotation.Bean;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Set;
 
+@Component
 public class PanCryptoUtil {
+    @Value("${app.security.pan-key}")
+    private String secretBase64;
 
-    private static final String ALGO = "AES/GCM/NoPadding";
-    private static final int IV_LENGTH = 12;
-    private static final int TAG_LENGTH = 128;
+    private SecretKeySpec keySpec;
+    private static final String ALGORITHM = "AES";
 
-    private final SecretKey secretKey;
-    private final SecureRandom random = new SecureRandom();
+    /**
+     * Разрешённые длины AES-ключа (в байтах).
+     */
+    private static final Set<Integer> ALLOWED_KEY_LENGTHS = Set.of(16, 24, 32);
 
-    public PanCryptoUtil(String base64Key) {
-        byte[] keyBytes = Base64.getDecoder().decode(base64Key);
-        this.secretKey = new SecretKeySpec(keyBytes, "AES");
+    @PostConstruct
+    public void init() {
+        byte[] decodedKey = Base64.getDecoder().decode(secretBase64);
+        int keyLen = decodedKey.length;
+
+        if (!ALLOWED_KEY_LENGTHS.contains(keyLen)) {
+            throw new IllegalArgumentException(
+                    "Invalid AES key length: " + keyLen
+                            + " bytes (allowed: " + ALLOWED_KEY_LENGTHS + ")"
+            );
+        }
+
+        keySpec = new SecretKeySpec(decodedKey, ALGORITHM);
     }
 
     public String encrypt(String pan) {
         try {
-            byte[] iv = new byte[IV_LENGTH];
-            random.nextBytes(iv);
-
-            Cipher cipher = Cipher.getInstance(ALGO);
-            GCMParameterSpec spec = new GCMParameterSpec(TAG_LENGTH, iv);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec);
-
-            byte[] cipherText = cipher.doFinal(pan.getBytes(StandardCharsets.UTF_8));
-
-            byte[] result = new byte[iv.length + cipherText.length];
-            System.arraycopy(iv, 0, result, 0, iv.length);
-            System.arraycopy(cipherText, 0, result, iv.length, cipherText.length);
-
-            return Base64.getEncoder().encodeToString(result);
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+            byte[] encrypted = cipher.doFinal(pan.getBytes());
+            return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
-            throw new IllegalStateException("PAN encryption failed", e);
+            throw new RuntimeException(e);
         }
     }
 
-    public String decrypt(String encrypted) throws Exception {
-        byte[] allBytes = Base64.getDecoder().decode(encrypted);
-
-        byte[] iv = new byte[IV_LENGTH];
-        System.arraycopy(allBytes, 0, iv, 0, IV_LENGTH);
-
-        byte[] cipherText = new byte[allBytes.length - IV_LENGTH];
-        System.arraycopy(allBytes, IV_LENGTH, cipherText, 0, cipherText.length);
-
-        Cipher cipher = Cipher.getInstance(ALGO);
-        GCMParameterSpec spec = new GCMParameterSpec(TAG_LENGTH, iv);
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
-
-        byte[] plain = cipher.doFinal(cipherText);
-        return new String(plain, StandardCharsets.UTF_8);
+    public String decrypt(String encryptedPan) {
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, keySpec);
+            byte[] decoded = Base64.getDecoder().decode(encryptedPan);
+            return new String(cipher.doFinal(decoded));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

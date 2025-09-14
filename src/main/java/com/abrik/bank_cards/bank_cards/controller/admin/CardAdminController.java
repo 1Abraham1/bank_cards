@@ -3,7 +3,7 @@ package com.abrik.bank_cards.bank_cards.controller.admin;
 import com.abrik.bank_cards.bank_cards.dto.card.CardResponse;
 import com.abrik.bank_cards.bank_cards.dto.card.CardStatus;
 import com.abrik.bank_cards.bank_cards.dto.card.CreateCardRequest;
-import com.abrik.bank_cards.bank_cards.dto.card.RequestStatusResponse;
+import com.abrik.bank_cards.bank_cards.dto.card.StatusResponse;
 import com.abrik.bank_cards.bank_cards.dto.common.PageResponse;
 import com.abrik.bank_cards.bank_cards.service.admin.CardAdminService;
 import jakarta.validation.Valid;
@@ -43,12 +43,12 @@ public class CardAdminController {
     }
 
     @PostMapping("/{cardId}/block")
-    public RequestStatusResponse block(@PathVariable UUID cardId) {
+    public StatusResponse block(@PathVariable UUID cardId) {
         return adminCardService.blockCard(cardId);
     }
 
     @PostMapping("/{cardId}/activate")
-    public RequestStatusResponse activate(@PathVariable UUID cardId) {
+    public StatusResponse activate(@PathVariable UUID cardId) {
         return adminCardService.activateCard(cardId);
     }
 
