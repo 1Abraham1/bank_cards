@@ -10,10 +10,18 @@ import java.util.List;
 public class MyUserDetails extends User {
     private final Long userId;
     private final List<SimpleGrantedAuthority> roles;
+    private final boolean enabled;
 
-    public MyUserDetails(String username, String password, Long userId, List<SimpleGrantedAuthority> roles) {
-        super(username, password, roles);
+    public MyUserDetails(
+            String username, String password, Long userId, List<SimpleGrantedAuthority> roles, boolean enabled) {
+        super(username, password, enabled, true, true, true, roles);
         this.userId = userId;
         this.roles = roles;
+        this.enabled = enabled;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 }

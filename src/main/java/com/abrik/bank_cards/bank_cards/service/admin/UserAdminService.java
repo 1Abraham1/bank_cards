@@ -10,7 +10,7 @@ import com.abrik.bank_cards.bank_cards.exception.NotFoundException;
 import com.abrik.bank_cards.bank_cards.repository.RoleRepository;
 import com.abrik.bank_cards.bank_cards.repository.UserRepository;
 import com.abrik.bank_cards.bank_cards.util.RoleUtil;
-import com.abrik.bank_cards.bank_cards.util.UserMapper;
+import com.abrik.bank_cards.bank_cards.util.UserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 public class UserAdminService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final RoleUtil roleUtil;
+    private final UserUtil userUtil;
 
     @Transactional(readOnly = true)
     public Page<UserDto> listUsers(
@@ -50,14 +52,14 @@ public class UserAdminService {
         );
 
         return userRepository.findAll(spec, pageable)
-                .map(UserMapper::toDto);
+                .map(userUtil::toDto);
     }
 
     @Transactional(readOnly = true)
     public UserDto getUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден: id=" + id));
-        return UserMapper.toDto(user);
+        return userUtil.toDto(user);
     }
 
     @Transactional
@@ -81,7 +83,7 @@ public class UserAdminService {
             user.setActive(request.getActive());
         }
 
-        return UserMapper.toDto(userRepository.save(user));
+        return userUtil.toDto(userRepository.save(user));
     }
 
     @Transactional
@@ -97,7 +99,7 @@ public class UserAdminService {
         // Нормализуем входные роли
         List<String> canonicalRequested = request.getRoles().stream()
                 .filter(Objects::nonNull)
-                .map(RoleUtil::canonical)
+                .map(roleUtil::canonical)
                 .toList();
 
         if (canonicalRequested.isEmpty()) {
@@ -115,7 +117,7 @@ public class UserAdminService {
 
         // Проверим, что все роли существуют
         Set<String> foundCanonicals = found.stream()
-                .map(r -> RoleUtil.canonical(r.getName()))
+                .map(r -> roleUtil.canonical(r.getName()))
                 .collect(Collectors.toSet());
 
         List<String> missing = canonicalRequested.stream()
@@ -128,7 +130,7 @@ public class UserAdminService {
 
         // Проверки на "последнего активного админа"
         boolean userWasAdmin = user.getRoles() != null && user.getRoles().stream()
-                .anyMatch(r -> RoleUtil.isAdminCanonical(RoleUtil.canonical(r.getName())));
+                .anyMatch(r -> roleUtil.isAdminCanonical(roleUtil.canonical(r.getName())));
         boolean userWillBeAdmin = foundCanonicals.contains("ADMIN");
 
         if (userWasAdmin && !userWillBeAdmin) {
@@ -145,7 +147,7 @@ public class UserAdminService {
         }
 
         user.setRoles(found);
-        return UserMapper.toDto(userRepository.save(user));
+        return userUtil.toDto(userRepository.save(user));
     }
 
     @Transactional
@@ -154,7 +156,7 @@ public class UserAdminService {
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден: id=" + id));
 
         user.setActive(true);
-        return UserMapper.toDto(userRepository.save(user));
+        return userUtil.toDto(userRepository.save(user));
     }
 
     @Transactional
@@ -168,7 +170,7 @@ public class UserAdminService {
         }
 
         boolean isAdmin = user.getRoles() != null && user.getRoles().stream()
-                .anyMatch(r -> RoleUtil.isAdminCanonical(RoleUtil.canonical(r.getName())));
+                .anyMatch(r -> roleUtil.isAdminCanonical(roleUtil.canonical(r.getName())));
 
         if (isAdmin && Boolean.TRUE.equals(user.getActive())) {
             long activeAdmins = userRepository.countActiveUsersWithRole("ADMIN")
@@ -179,7 +181,7 @@ public class UserAdminService {
         }
 
         user.setActive(false);
-        return UserMapper.toDto(userRepository.save(user));
+        return userUtil.toDto(userRepository.save(user));
     }
 
     private String currentUsername() {

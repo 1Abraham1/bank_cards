@@ -3,14 +3,13 @@ package com.abrik.bank_cards.bank_cards.util;
 import com.abrik.bank_cards.bank_cards.dto.user.UserDto;
 import com.abrik.bank_cards.bank_cards.entity.Role;
 import com.abrik.bank_cards.bank_cards.entity.User;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-public final class UserMapper {
-
-    private UserMapper() {}
-
-    public static UserDto toDto(User u) {
+@Component
+public class UserUtil {
+    public UserDto toDto(User u) {
         return UserDto.builder()
                 .id(u.getId())
                 .username(u.getUsername())

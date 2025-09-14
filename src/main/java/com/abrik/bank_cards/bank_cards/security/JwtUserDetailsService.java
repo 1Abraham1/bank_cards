@@ -20,11 +20,14 @@ public class JwtUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userService.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(
-                String.format("User '%s' not found", username)
-        ));
-        return new MyUserDetails(user.getUsername(), user.getPassword(), user.getId(),
-                user.getRoles().stream().map(
-                        role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList()));
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                String.format("User '%s' not found", username)));
+
+        var authorities = user.getRoles().stream().map(
+                role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+
+        return new MyUserDetails(
+                user.getUsername(), user.getPassword(), user.getId(), authorities, user.getActive());
     }
 }

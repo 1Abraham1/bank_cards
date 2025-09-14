@@ -1,9 +1,6 @@
 package com.abrik.bank_cards.bank_cards.config;
 
-import com.abrik.bank_cards.bank_cards.security.JwtAccessDeniedHandler;
-import com.abrik.bank_cards.bank_cards.security.JwtAuthenticationEntryPoint;
-import com.abrik.bank_cards.bank_cards.security.JwtRequestFilter;
-import com.abrik.bank_cards.bank_cards.security.JwtUserDetailsService;
+import com.abrik.bank_cards.bank_cards.security.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +34,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationEntryPoint entryPoint,
                                            JwtAccessDeniedHandler accessDeniedHandler,
-                                           JwtRequestFilter jwtRequestFilter) throws Exception {
+                                           JwtRequestFilter jwtRequestFilter,
+                                           AccountStatusFilter accountStatusFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s
@@ -51,7 +49,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(accountStatusFilter, JwtRequestFilter.class);
 
         return http.build();
     }

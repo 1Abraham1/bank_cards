@@ -40,10 +40,12 @@ public class UserService {
         User user = new User();
         user.setUsername(registrationUserDto.getUsername());
         user.setEmail(registrationUserDto.getEmail());
+        user.setFullName(registrationUserDto.getFullName());
         user.setPassword(passwordEncoder.encode(registrationUserDto.getPassword()));
         user.setRoles(List.of(roleService.getUserRole()));
         userRepository.save(user);
-        return new CreateUserResponse(user.getId(), user.getUsername(), user.getEmail());
+        return new CreateUserResponse(
+                user.getId(), user.getUsername(), user.getFullName(), user.getEmail());
     }
 
     public void deleteAccount(Long userId) {
