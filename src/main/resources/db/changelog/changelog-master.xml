@@ -15,4 +15,7 @@
     <include file="003-add-transfer-idempotency.xml"
              relativeToChangelogFile="true"/>
 
+    <include file="004-add-user-fields.xml"
+             relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

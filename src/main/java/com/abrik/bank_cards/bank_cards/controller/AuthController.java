@@ -2,13 +2,14 @@ package com.abrik.bank_cards.bank_cards.controller;
 
 import com.abrik.bank_cards.bank_cards.dto.jwt.JwtRequest;
 import com.abrik.bank_cards.bank_cards.dto.jwt.JwtResponse;
-import com.abrik.bank_cards.bank_cards.dto.RegistrationUserDto;
-import com.abrik.bank_cards.bank_cards.dto.UserDto;
+import com.abrik.bank_cards.bank_cards.dto.user.RegistrationUserDto;
+import com.abrik.bank_cards.bank_cards.dto.user.CreateUserResponse;
 import com.abrik.bank_cards.bank_cards.security.MyUserDetails;
 import com.abrik.bank_cards.bank_cards.service.AuthService;
 import com.abrik.bank_cards.bank_cards.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,12 +25,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDto> createNewUser(@RequestBody RegistrationUserDto registrationUserDto) {
+    public ResponseEntity<CreateUserResponse> createNewUser(@RequestBody RegistrationUserDto registrationUserDto) {
         return ResponseEntity.ok(userService.createNewUser(registrationUserDto));
     }
 
     @DeleteMapping("/account")
-    void deleteAccount(@RequestBody MyUserDetails myUserDetails) {
+    void deleteAccount(@AuthenticationPrincipal MyUserDetails myUserDetails) {
         userService.deleteAccount(myUserDetails.getUserId());
     }
 }

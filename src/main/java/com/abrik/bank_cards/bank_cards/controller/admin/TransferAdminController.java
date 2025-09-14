@@ -2,7 +2,7 @@ package com.abrik.bank_cards.bank_cards.controller.admin;
 
 import com.abrik.bank_cards.bank_cards.dto.transfer.TransferResponse;
 import com.abrik.bank_cards.bank_cards.dto.transfer.TransferStatus;
-import com.abrik.bank_cards.bank_cards.service.admin.AdminTransferService;
+import com.abrik.bank_cards.bank_cards.service.admin.TransferAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,8 +19,8 @@ import java.util.UUID;
 @RequestMapping("/api/admin/transfers")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-public class AdminTransferController {
-    private final AdminTransferService adminTransferService;
+public class TransferAdminController {
+    private final TransferAdminService adminTransferService;
 
     @GetMapping
     public Page<TransferResponse> listAll(

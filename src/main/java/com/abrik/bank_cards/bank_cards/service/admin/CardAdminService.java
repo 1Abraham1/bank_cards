@@ -13,19 +13,20 @@ import com.abrik.bank_cards.bank_cards.repository.CardRepository;
 import com.abrik.bank_cards.bank_cards.repository.UserRepository;
 import com.abrik.bank_cards.bank_cards.service.user.CardService;
 import com.abrik.bank_cards.bank_cards.util.CardUtil;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AdminCardService {
+public class CardAdminService {
     private final CardService cardService;
     private final CardUtil cardUtil;
     private final UserRepository userRepository;

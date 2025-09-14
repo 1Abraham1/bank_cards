@@ -72,9 +72,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
     }
 
-    // ФОЛЛБЭК
     @ExceptionHandler(RoleNotFoundException.class)
     public ResponseEntity<AppError> handleRoleNotFound(RoleNotFoundException ex) {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), ex);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<AppError> handleRoleNotFound(ConflictException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), ex);
     }
 }

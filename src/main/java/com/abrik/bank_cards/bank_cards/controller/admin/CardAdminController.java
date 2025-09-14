@@ -5,7 +5,7 @@ import com.abrik.bank_cards.bank_cards.dto.card.CardStatus;
 import com.abrik.bank_cards.bank_cards.dto.card.CreateCardRequest;
 import com.abrik.bank_cards.bank_cards.dto.card.RequestStatusResponse;
 import com.abrik.bank_cards.bank_cards.dto.common.PageResponse;
-import com.abrik.bank_cards.bank_cards.service.admin.AdminCardService;
+import com.abrik.bank_cards.bank_cards.service.admin.CardAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -21,8 +21,8 @@ import java.util.UUID;
 @RequestMapping("/api/admin/cards")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-public class AdminCardController {
-    private final AdminCardService adminCardService;
+public class CardAdminController {
+    private final CardAdminService adminCardService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

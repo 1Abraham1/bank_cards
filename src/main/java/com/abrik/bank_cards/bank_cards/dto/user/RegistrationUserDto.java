@@ -1,4 +1,4 @@
-package com.abrik.bank_cards.bank_cards.dto;
+package com.abrik.bank_cards.bank_cards.dto.user;
 
 import lombok.Data;
 

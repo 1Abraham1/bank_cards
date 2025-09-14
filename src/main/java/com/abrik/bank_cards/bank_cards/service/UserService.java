@@ -1,8 +1,7 @@
 package com.abrik.bank_cards.bank_cards.service;
 
-import com.abrik.bank_cards.bank_cards.dto.jwt.JwtRequest;
-import com.abrik.bank_cards.bank_cards.dto.RegistrationUserDto;
-import com.abrik.bank_cards.bank_cards.dto.UserDto;
+import com.abrik.bank_cards.bank_cards.dto.user.RegistrationUserDto;
+import com.abrik.bank_cards.bank_cards.dto.user.CreateUserResponse;
 import com.abrik.bank_cards.bank_cards.entity.User;
 import com.abrik.bank_cards.bank_cards.exception.BadInputParameters;
 import com.abrik.bank_cards.bank_cards.exception.PasswordMismatchException;
@@ -28,7 +27,7 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    public UserDto createNewUser(RegistrationUserDto registrationUserDto) {
+    public CreateUserResponse createNewUser(RegistrationUserDto registrationUserDto) {
         if (!registrationUserDto.getPassword().equals(registrationUserDto.getConfirmPassword())) {
             throw new PasswordMismatchException("Passwords don't match");
         }
@@ -44,7 +43,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(registrationUserDto.getPassword()));
         user.setRoles(List.of(roleService.getUserRole()));
         userRepository.save(user);
-        return new UserDto(user.getId(), user.getUsername(), user.getEmail());
+        return new CreateUserResponse(user.getId(), user.getUsername(), user.getEmail());
     }
 
     public void deleteAccount(Long userId) {

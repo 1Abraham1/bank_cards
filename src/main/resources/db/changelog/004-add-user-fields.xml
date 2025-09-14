@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        logicalFilePath="db/changelog/004-add-user-fields.xml"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <changeSet id="004-add-user-fields" author="you">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="full_name"/>
+                <columnExists tableName="users" columnName="is_active"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="full_name" type="varchar(255)"/>
+        </addColumn>
+
+        <addColumn tableName="users">
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="users" columnName="is_active"/>
+            <dropColumn tableName="users" columnName="full_name"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

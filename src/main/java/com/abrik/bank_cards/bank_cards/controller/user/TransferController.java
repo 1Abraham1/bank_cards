@@ -24,7 +24,8 @@ public class TransferController {
     private final TransferService transferService;
 
     @PostMapping
-    public ResponseEntity<TransferResponse> create(
+    @ResponseStatus(HttpStatus.CREATED)
+    public TransferResponse create(
             @AuthenticationPrincipal MyUserDetails myUserDetails,
             @Valid @RequestBody CreateTransferRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false) String idemKeyHeader) {
@@ -33,8 +34,7 @@ public class TransferController {
                 ? UUID.randomUUID().toString()
                 : idemKeyHeader.trim();
 
-        TransferResponse resp = transferService.transferOwnCards(myUserDetails.getUserId(), request, idempotencyKey);
-        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+        return transferService.transferOwnCards(myUserDetails.getUserId(), request, idempotencyKey);
     }
 
     // 1) Список СВОИХ переводов

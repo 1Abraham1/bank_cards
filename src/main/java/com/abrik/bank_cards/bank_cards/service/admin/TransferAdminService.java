@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AdminTransferService {
+public class TransferAdminService {
     private final TransferRepository transferRepository;
     private final TransferUtil transferUtil;
 
