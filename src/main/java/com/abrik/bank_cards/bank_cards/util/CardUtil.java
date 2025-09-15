@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.time.Clock;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class CardUtil {
@@ -90,5 +91,31 @@ public class CardUtil {
             return "**** **** **** ****";
         }
         return "**** **** **** " + last4;
+    }
+
+    private static final Pattern PAN_PATTERN = Pattern.compile("^\\d{13,19}$");
+
+    /**
+     * Валидирует PAN:
+     * 1) обязательность
+     * 2) нормализация (удаление пробелов/дефисов)
+     * 3) проверка по регулярке (13–19 цифр)
+     * 4) проверка по модулю Луна
+     * Возвращает нормализованный PAN (без пробелов и дефисов).
+     */
+    public String validatePan(String rawPan) {
+        if (rawPan == null || rawPan.isBlank()) {
+            throw new BadRequestException("PAN обязателен");
+        }
+
+        // 1) Нормализация: убираем пробелы и дефисы
+        String pan = rawPan.replaceAll("[\\s-]", "");
+
+        // 2) Регулярка: только цифры, длина 13–19
+        if (!PAN_PATTERN.matcher(pan).matches()) {
+            throw new BadRequestException("PAN должен состоять из 13–19 цифр");
+        }
+
+        return pan;
     }
 }

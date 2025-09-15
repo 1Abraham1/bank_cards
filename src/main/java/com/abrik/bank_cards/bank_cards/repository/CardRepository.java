@@ -31,9 +31,12 @@ public interface CardRepository extends JpaRepository<Card, UUID> {
     select c from Card c
     where (:userId is null or c.userId = :userId)
       and (:status is null or c.status = :status)
-      and (:qPattern is null or lower(c.currency) like :qPattern)
-      and (:last4Pattern is null or cast(c.last4 as string) like :last4Pattern)
-    """)
+      and (
+            (:qPattern is null and :last4Pattern is null)
+         or (:qPattern is not null and lower(c.currency) like :qPattern)
+         or (:last4Pattern is not null and cast(c.last4 as string) like :last4Pattern)
+      )
+""")
     Page<Card> search(
             @Param("userId") Long userId,
             @Param("status") CardStatus status,

@@ -17,7 +17,6 @@ public class CreateTransferRequest {
     private UUID toCardId;
 
     @NotNull
-    @DecimalMin(value = "0.01", inclusive = true, message = "Сумма должна быть > 0")
     @Digits(integer = 17, fraction = 2)
     @Schema(example = "100.00")
     private BigDecimal amount;

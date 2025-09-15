@@ -32,9 +32,7 @@ public class CardService {
         cardUtil.validateExpiry(request.getExpiryMonth(), request.getExpiryYear());
 
         String pan = request.getPan();
-        if (pan == null || pan.length() < 4) {
-            throw new BadRequestException("PAN слишком короткий");
-        }
+        cardUtil.validatePan(pan);
 
         String last4 = pan.substring(pan.length() - 4);
         String panEncrypted = panCryptoUtil.encrypt(pan);
